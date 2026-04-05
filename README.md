@@ -1,4 +1,4 @@
-# PhishSim — Phishing Simulation & Awareness Platform
+# PhantomX — Phishing Simulation & Awareness Platform
 
 > Built by **Aditya Vishwakarma** · 
 > Licensed for non-commercial use only — see [LICENSE](LICENSE)
