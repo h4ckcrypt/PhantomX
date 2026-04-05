@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Campaign Detail</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:Arial,sans-serif;min-height:100vh}
+
+.topbar{background:#1e293b;padding:14px 24px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid #334155;
+  position:sticky;top:0;z-index:20}
+.topbar h1{font-size:1.1rem;color:#f1f5f9}
+.topbar-links{display:flex;gap:10px;align-items:center}
+.nav-link{color:#94a3b8;text-decoration:none;font-size:.82rem;padding:5px 12px;
+  border:1px solid #334155;border-radius:6px}
+.nav-link:hover,.nav-link.active{background:#334155;color:#e2e8f0}
+.logout-btn{color:#64748b;font-size:.8rem;text-decoration:none;
+  padding:5px 12px;border:1px solid #334155;border-radius:6px}
+
+.page{padding:24px;max-width:1100px;margin:0 auto}
+
+.back-link{display:inline-flex;align-items:center;gap:5px;color:#38bdf8;
+  text-decoration:none;font-size:.83rem;margin-bottom:20px}
+.back-link:hover{text-decoration:underline}
+
+/* ── Header ── */
+.camp-header{display:flex;align-items:flex-start;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;margin-bottom:28px}
+.camp-title{font-size:1.35rem;font-weight:700;color:#f1f5f9}
+.camp-subtitle{font-size:.82rem;color:#64748b;margin-top:4px}
+
+/* ── Metric strip ── */
+.metric-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.mcard{background:#1e293b;border-radius:10px;border:1px solid #334155;
+  padding:14px 20px;text-align:center;flex:1;min-width:100px}
+.mcard .mval{font-size:1.5rem;font-weight:700}
+.mcard .mlbl{font-size:.7rem;color:#94a3b8;margin-top:4px;
+  text-transform:uppercase;letter-spacing:.04em}
+.m-blue   .mval{color:#38bdf8}
+.m-orange .mval{color:#f97316}
+.m-red    .mval{color:#ef4444}
+.m-green  .mval{color:#22c55e}
+.m-grey   .mval{color:#94a3b8}
+
+/* ── Section ── */
+.section{margin-bottom:32px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px}
+.section-title{font-size:.8rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:#64748b}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+  border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer}
+.btn-primary{background:#0ea5e9;color:#fff}
+.btn-primary:hover{background:#0284c7}
+.btn-sm{padding:5px 12px;font-size:.78rem;font-weight:500}
+.btn-ghost{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+.btn-ghost:hover{background:#334155;color:#e2e8f0}
+.btn-danger{background:none;color:#ef4444;border:1px solid #7f1d1d}
+.btn-danger:hover{background:#450a0a}
+
+/* ── Add targets area ── */
+.add-targets-box{background:#1e293b;border:1px solid #334155;border-radius:10px;
+  padding:18px;margin-bottom:16px}
+.add-targets-box textarea{width:100%;background:#0f172a;border:1px solid #334155;
+  border-radius:8px;color:#e2e8f0;padding:10px;font-size:.85rem;
+  font-family:monospace;resize:vertical;outline:none;min-height:80px}
+.add-targets-box textarea:focus{border-color:#38bdf8}
+.add-targets-box .hint{font-size:.75rem;color:#475569;margin-bottom:8px}
+
+/* ── Target table ── */
+.target-table{width:100%;border-collapse:collapse;background:#1e293b;
+  border-radius:10px;overflow:hidden}
+.target-table th{background:#0f172a;padding:10px 14px;text-align:left;
+  font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+.target-table td{padding:11px 14px;font-size:.83rem;border-top:1px solid #263548}
+.target-table tr:hover td{background:#1e3352}
+
+/* ── Outcome badges ── */
+.outcome{display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:.7rem;font-weight:700;text-transform:uppercase}
+.out-ignored     {background:#1e293b;color:#64748b;border:1px solid #334155}
+.out-clicked     {background:#422006;color:#f97316}
+.out-engaged     {background:#1c1917;color:#a8a29e;border:1px solid #44403c}
+.out-compromised {background:#450a0a;color:#ef4444}
+
+/* ── Attack flow steps ── */
+.flow-steps{display:flex;align-items:center;gap:0}
+.flow-step{display:flex;align-items:center;gap:4px;font-size:.7rem}
+.flow-dot{width:10px;height:10px;border-radius:50%;background:#334155;
+  border:2px solid #475569}
+.flow-dot.done{background:#22c55e;border-color:#16a34a}
+.flow-dot.compromised-dot{background:#ef4444;border-color:#dc2626}
+.flow-line{width:16px;height:2px;background:#334155}
+.flow-line.done{background:#22c55e}
+
+/* ── Tracking link copy ── */
+.link-cell{display:flex;align-items:center;gap:6px;max-width:260px}
+.link-text{font-size:.72rem;color:#38bdf8;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:200px;font-family:monospace}
+.copy-btn{background:none;border:none;color:#475569;cursor:pointer;font-size:.8rem;
+  padding:2px 4px;border-radius:4px}
+.copy-btn:hover{color:#38bdf8;background:#0c4a6e22}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:#000b;z-index:100;
+  align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;
+  padding:28px;width:100%;max-width:460px}
+.modal h3{font-size:1rem;color:#f1f5f9;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{background:#334155;color:#e2e8f0;border:none;padding:8px 16px;
+  border-radius:8px;cursor:pointer;font-size:.85rem}
+
+.empty{color:#475569;text-align:center;padding:40px;font-size:.88rem}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🛡 Phishing Intelligence</h1>
+  <div class="topbar-links">
+    <a class="nav-link" href="/dashboard">Sessions</a>
+    <a class="nav-link" href="/campaigns">Campaigns</a>
+    <a class="logout-btn" href="/logout">Sign Out</a>
+  </div>
+</div>
+
+<div class="page">
+  <a class="back-link" href="/campaigns">← All Campaigns</a>
+
+  <!-- Campaign header -->
+  <div class="camp-header">
+    <div>
+      <div class="camp-title" id="c-name">Loading…</div>
+      <div class="camp-subtitle" id="c-meta"></div>
+    </div>
+    <div id="c-status-badge"></div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metric-strip">
+    <div class="mcard m-blue"> <div class="mval" id="m-total">–</div><div class="mlbl">Targets</div></div>
+    <div class="mcard m-grey"> <div class="mval" id="m-sent">–</div> <div class="mlbl">Email Sent</div></div>
+    <div class="mcard m-orange"><div class="mval" id="m-click">–</div> <div class="mlbl">Click Rate</div></div>
+    <div class="mcard m-orange"><div class="mval" id="m-inter">–</div> <div class="mlbl">Interaction Rate</div></div>
+    <div class="mcard m-red">  <div class="mval" id="m-comp">–</div>  <div class="mlbl">Compromise Rate</div></div>
+  </div>
+
+  <!-- Outcome breakdown -->
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Outcome Breakdown</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap" id="outcome-breakdown"></div>
+  </div>
+
+  <!-- Add Targets -->
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-title">Targets</span>
+      <button class="btn btn-primary btn-sm" onclick="openAdd()">+ Add Targets</button>
+    </div>
+    <div id="target-container">
+      <div class="empty">No targets yet</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Target Modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <h3>Add Targets</h3>
+    <div class="add-targets-box">
+      <div class="hint">One target per line: <code>email, Name (optional)</code></div>
+      <textarea id="bulk-input" placeholder="alice@corp.com, Alice Smith&#10;bob@corp.com, Bob Jones&#10;carol@corp.com"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAdd()">Cancel</button>
+      <button class="btn btn-primary" onclick="addTargets()">Add Targets →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CID = "{{ campaign_id }}";
+
+const FLOW_STEPS = ["email_sent","link_clicked","page_visited","interaction","compromised"];
+const STEP_LABEL = {
+  email_sent:   "📧",
+  link_clicked: "🔗",
+  page_visited: "🌐",
+  interaction:  "🖱",
+  compromised:  "💀",
+};
+
+function outcomeClass(o) {
+  return "out-" + (o || "ignored");
+}
+
+function flowHTML(events) {
+  const done = new Set((events || []).map(e => e.step));
+  const isComp = done.has("compromised");
+  return FLOW_STEPS.map((step, i) => {
+    const d = done.has(step);
+    const cls = d ? (step === "compromised" ? "compromised-dot" : "done") : "";
+    const lineCls = (i < FLOW_STEPS.length - 1 && done.has(FLOW_STEPS[i+1])) ? "done" : "";
+    return `
+      <div class="flow-step" title="${step}">
+        <div class="flow-dot ${cls}"></div>
+        <span style="font-size:.65rem;color:${d?'#94a3b8':'#334155'}">${STEP_LABEL[step]}</span>
+      </div>
+      ${i < FLOW_STEPS.length-1 ? `<div class="flow-line ${lineCls}"></div>` : ""}`;
+  }).join("");
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url);
+}
+
+function renderTargets(targets) {
+  const c = document.getElementById("target-container");
+  if (!targets || !targets.length) {
+    c.innerHTML = '<div class="empty">No targets yet. Click + Add Targets.</div>';
+    return;
+  }
+
+  const rows = targets.map(t => {
+    const link = t.tracking_url || "";
+    return `<tr>
+      <td>
+        <div style="font-weight:600;color:#f1f5f9">${t.name || "—"}</div>
+        <div style="font-size:.75rem;color:#64748b">${t.email}</div>
+      </td>
+      <td>
+        <div class="link-cell">
+          <span class="link-text" title="${link}">${link}</span>
+          <button class="copy-btn" onclick="copyLink('${link}')" title="Copy link">📋</button>
+        </div>
+      </td>
+      <td><span class="outcome ${outcomeClass(t.outcome)}">${t.outcome || "ignored"}</span></td>
+      <td><div class="flow-steps">${flowHTML(t.events)}</div></td>
+      <td>
+        ${t.session_id
+          ? `<a href="/session/${t.session_id}" style="color:#38bdf8;font-size:.78rem">View Session →</a>`
+          : '<span style="color:#475569;font-size:.78rem">—</span>'}
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-sm"
+          onclick="markSent('${t.uid}')"
+          ${(t.events||[]).some(e=>e.step==='email_sent') ? 'disabled style="opacity:.4"' : ""}>
+          📧 Mark Sent
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  c.innerHTML = `
+    <table class="target-table">
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Tracking Link</th>
+          <th>Outcome</th>
+          <th>Attack Flow</th>
+          <th>Session</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderOutcomeBreakdown(targets, metrics) {
+  const box = document.getElementById("outcome-breakdown");
+  const outcomes = {
+    compromised: { label: "💀 Compromised", color: "#ef4444", bg: "#450a0a" },
+    engaged:     { label: "🖱 Engaged",     color: "#f97316", bg: "#431407" },
+    clicked:     { label: "🔗 Clicked",     color: "#eab308", bg: "#422006" },
+    ignored:     { label: "🙈 Ignored",     color: "#64748b", bg: "#1e293b" },
+  };
+  box.innerHTML = Object.entries(outcomes).map(([key, o]) => {
+    const n = (targets||[]).filter(t => t.outcome === key).length;
+    return `<div style="background:${o.bg};border-radius:10px;padding:12px 18px;
+      min-width:110px;text-align:center;border:1px solid ${o.color}44">
+      <div style="font-size:1.3rem;font-weight:700;color:${o.color}">${n}</div>
+      <div style="font-size:.72rem;color:${o.color};margin-top:3px">${o.label}</div>
+    </div>`;
+  }).join("");
+}
+
+async function loadCampaign() {
+  const res  = await fetch(`/api/campaigns/${CID}`);
+  if (!res.ok) { document.querySelector(".camp-title").textContent = "Campaign not found"; return; }
+  const data = await res.json();
+
+  document.getElementById("c-name").textContent = data.name;
+  document.getElementById("c-meta").textContent =
+    `Template: ${data.template}  ·  Created: ${new Date(data.created_at*1000).toLocaleDateString()}`;
+
+  const statusColors = {active:"#22c55e", paused:"#eab308", completed:"#64748b"};
+  document.getElementById("c-status-badge").innerHTML =
+    `<span style="background:${statusColors[data.status]}22;color:${statusColors[data.status]};
+      border:1px solid ${statusColors[data.status]}66;padding:4px 14px;border-radius:20px;
+      font-size:.78rem;font-weight:700;text-transform:uppercase">${data.status}</span>`;
+
+  const m = data.metrics || {};
+  document.getElementById("m-total").textContent = m.total || 0;
+  document.getElementById("m-sent").textContent  = m.sent  || 0;
+  document.getElementById("m-click").textContent = (m.click_rate || 0) + "%";
+  document.getElementById("m-inter").textContent = (m.interaction_rate || 0) + "%";
+  document.getElementById("m-comp").textContent  = (m.compromise_rate || 0) + "%";
+
+  renderOutcomeBreakdown(data.targets, m);
+  renderTargets(data.targets);
+}
+
+function openAdd()  { document.getElementById("add-overlay").classList.add("show"); }
+function closeAdd() { document.getElementById("add-overlay").classList.remove("show"); }
+
+async function addTargets() {
+  const text = document.getElementById("bulk-input").value.trim();
+  if (!text) return;
+
+  const res = await fetch(`/api/campaigns/${CID}/targets/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: text
+  });
+  if (res.ok) {
+    document.getElementById("bulk-input").value = "";
+    closeAdd();
+    loadCampaign();
+  }
+}
+
+async function markSent(uid) {
+  await fetch(`/api/campaigns/${CID}/targets/${uid}/email_sent`, { method: "POST" });
+  loadCampaign();
+}
+
+loadCampaign();
+setInterval(loadCampaign, 8000);
+</script>
+</body>
+</html>

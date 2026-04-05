@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0f172a; color: white; font-family: Arial, sans-serif; }
+
+        /* ── Topbar ── */
+        .topbar {
+            background: #1e293b; padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 10;
+        }
+        .topbar h1 { font-size: 1.15rem; color: #f1f5f9; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .admin-badge {
+            font-size: .78rem; color: #38bdf8;
+            background: #0c4a6e44; border: 1px solid #0ea5e9;
+            border-radius: 20px; padding: 3px 12px;
+        }
+        .topbar-btn {
+            font-size: .8rem; color: #94a3b8; text-decoration: none;
+            padding: 5px 13px; border: 1px solid #334155;
+            border-radius: 6px; cursor: pointer; background: none;
+            transition: background .15s;
+        }
+        .topbar-btn:hover { background: #334155; color: #e2e8f0; }
+        .topbar-btn.danger { color: #ef4444; border-color: #7f1d1d; }
+        .topbar-btn.danger:hover { background: #450a0a; }
+
+        /* ── Summary ── */
+        .container { padding: 20px 24px 8px; }
+        .summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+        .summary-card {
+            background: #1e293b; border-radius: 10px;
+            padding: 14px 22px; min-width: 110px; text-align: center;
+            border: 1px solid #334155; flex: 1;
+        }
+        .summary-card .count { font-size: 2rem; font-weight: bold; }
+        .summary-card .label { font-size: .75rem; color: #94a3b8; margin-top: 4px; }
+        .refresh-note { color: #475569; font-size: .73rem; margin-bottom: 16px; }
+
+        /* ── Session cards ── */
+        #live-sessions { padding: 0 24px 32px; }
+        .card {
+            background: #1e293b; padding: 16px 20px; margin-bottom: 10px;
+            border-radius: 10px; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 10px;
+            border: 1px solid #334155;
+        }
+        .card.high   { border-left: 5px solid #ef4444; }
+        .card.medium { border-left: 5px solid #f97316; }
+        .card.low    { border-left: 5px solid #22c55e; }
+
+        .card-left h3 { font-size: .95rem; margin-bottom: 5px; color: #f1f5f9; }
+        .card-meta { font-size: .82rem; color: #94a3b8; line-height: 1.7; }
+
+        .score-bar-wrap {
+            background: #0f172a; border-radius: 4px;
+            height: 5px; width: 160px; margin-top: 6px; overflow: hidden;
+        }
+        .score-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+        .bar-high   { background: #ef4444; }
+        .bar-medium { background: #f97316; }
+        .bar-low    { background: #22c55e; }
+
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: .73rem; font-weight: 700;
+        }
+        .badge.high    { background: #450a0a; color: #ef4444; }
+        .badge.medium  { background: #431407; color: #f97316; }
+        .badge.low     { background: #052e16; color: #22c55e; }
+        .badge.active  { background: #0c4a6e; color: #38bdf8; }
+        .badge.idle    { background: #1c1917; color: #a8a29e; border:1px solid #44403c; }
+        .badge.closed  { background: #1e293b; color: #64748b; border:1px solid #334155; }
+
+        .view-btn {
+            color: #38bdf8; text-decoration: none; font-size: .82rem;
+            padding: 6px 14px; border: 1px solid #38bdf8; border-radius: 6px;
+        }
+        .view-btn:hover { background: #0c4a6e; }
+
+        .del-btn {
+            color: #64748b; font-size: .82rem; padding: 6px 10px;
+            border: 1px solid #334155; border-radius: 6px;
+            cursor: pointer; background: none;
+            transition: all .15s;
+        }
+        .del-btn:hover { color: #ef4444; border-color: #7f1d1d; background: #450a0a20; }
+
+        .empty-state { color: #475569; font-size: .9rem; padding: 40px; text-align: center; }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .dot-active {
+            display: inline-block; width: 7px; height: 7px;
+            background: #38bdf8; border-radius: 50%; margin-right: 5px;
+            animation: pulse 1.4s infinite;
+        }
+
+        /* ── Confirm dialog ── */
+        .confirm-overlay {
+            display: none; position: fixed; inset: 0;
+            background: #000a; z-index: 100;
+            align-items: center; justify-content: center;
+        }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 12px; padding: 28px 32px; max-width: 360px;
+            text-align: center;
+        }
+        .confirm-box h3 { margin-bottom: 10px; color: #f1f5f9; }
+        .confirm-box p  { color: #94a3b8; font-size: .85rem; margin-bottom: 20px; }
+        .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+        .confirm-btns button {
+            padding: 8px 22px; border-radius: 8px; border: none;
+            font-size: .9rem; cursor: pointer; font-weight: 600;
+        }
+        .btn-cancel  { background: #334155; color: #e2e8f0; }
+        .btn-confirm { background: #dc2626; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>🛡 Behavior Intelligence Dashboard</h1>
+    <div class="topbar-right">
+        <span class="admin-badge">● Admin</span>
+        <a class="topbar-btn" href="/campaigns" style="color:#38bdf8;border-color:#38bdf8">📁 Campaigns</a>
+        <button class="topbar-btn danger" onclick="confirmClearAll()">Clear All</button>
+        <a class="topbar-btn" href="/logout">Sign Out</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="summary">
+        <div class="summary-card">
+            <div class="count" style="color:#e2e8f0" id="total-count">–</div>
+            <div class="label">Total</div>
+        </div>
+        <div class="summary-card">
+            <div class="count" style="color:#ef4444" id="high-count">–</div>
+            <div class="label">High Risk</div>
+        </div>
+        <div class="summary-card">
+            <div class="count" style="color:#f97316" id="medium-count">–</div>
+            <div class="label">Medium Risk</div>
+        </div>
+        <div class="summary-card">
+            <div class="count" style="color:#22c55e" id="low-count">–</div>
+            <div class="label">Low Risk</div>
+        </div>
+        <div class="summary-card">
+            <div class="count" style="color:#38bdf8" id="active-count">–</div>
+            <div class="label">Active Now</div>
+        </div>
+        <div class="summary-card">
+            <div class="count" style="color:#64748b" id="closed-count">–</div>
+            <div class="label">Closed</div>
+        </div>
+    </div>
+    <p class="refresh-note">🔄 Live — updates every 3s &nbsp;·&nbsp; Sessions persist until you delete them</p>
+</div>
+
+<div id="live-sessions">
+    <div class="empty-state">Loading sessions…</div>
+</div>
+
+<!-- Confirm clear-all dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <h3>⚠️ Clear All Sessions?</h3>
+        <p>This removes all sessions from the dashboard.<br>
+           <strong>AI training data is preserved.</strong></p>
+        <div class="confirm-btns">
+            <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+            <button class="btn-confirm" onclick="clearAll()">Clear All</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+// Map<session_id → session_row> — persists across polls
+const sessionStore = new Map();
+// Set<session_id> — sessions the admin explicitly deleted this tab session
+const deletedIds   = new Set();
+
+function catClass(cat) {
+    if (cat === "High Risk")   return "high";
+    if (cat === "Medium Risk") return "medium";
+    return "low";
+}
+
+function statusBadge(status) {
+    const s = (status || "unknown").toLowerCase();
+    if (s === "active") return `<span class="badge active"><span class="dot-active"></span>Active</span>`;
+    if (s === "closed") return `<span class="badge closed">Closed</span>`;
+    if (s === "idle")   return `<span class="badge idle">Idle</span>`;
+    return `<span class="badge closed">${status}</span>`;
+}
+
+function renderCard(s) {
+    const cls   = catClass(s.category);
+    const short = s.id.substring(0, 8);
+    return `
+    <div class="card ${cls}" id="card-${s.id}">
+      <div class="card-left">
+        <h3>Session <code>${short}…</code></h3>
+        <div class="card-meta">
+          Risk: <strong>${s.score}%</strong>
+          &nbsp;|&nbsp; Events: ${s.events}
+           &nbsp;|&nbsp; AI: <em>${s.ai_prediction}</em> 
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar bar-${cls}" style="width:${s.score}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="badge ${cls}">${s.category}</span>
+        ${statusBadge(s.status)}
+        <a class="view-btn" href="/session/${s.id}">View →</a>
+        <button class="del-btn" onclick="deleteSession('${s.id}')" title="Delete session">✕</button>
+      </div>
+    </div>`;
+}
+
+function rebuildUI() {
+    
+    const all     = [...sessionStore.values()];
+    const high    = all.filter(s => s.category === "High Risk").length;
+    const medium  = all.filter(s => s.category === "Medium Risk").length;
+    const low     = all.filter(s => s.category === "Low Risk").length;
+    const active  = all.filter(s => s.status === "active").length;
+    const closed  = all.filter(s => s.status === "closed").length;
+
+    document.getElementById("total-count").textContent  = all.length;
+    document.getElementById("high-count").textContent   = high;
+    document.getElementById("medium-count").textContent = medium;
+    document.getElementById("low-count").textContent    = low;
+    document.getElementById("active-count").textContent = active;
+    document.getElementById("closed-count").textContent = closed;
+
+    const container = document.getElementById("live-sessions");
+    if (all.length === 0) {
+        container.innerHTML = '<div class="empty-state">No sessions recorded yet. Share the phishing URL to begin.</div>';
+        return;
+    }
+
+    
+    all.sort((a, b) => b.score - a.score);
+
+    
+    const existingIds = new Set([...container.querySelectorAll(".card")].map(c => c.id.replace("card-", "")));
+    const newIds      = new Set(all.map(s => s.id));
+
+   
+    existingIds.forEach(id => {
+        if (!newIds.has(id)) {
+            const el = document.getElementById("card-" + id);
+            if (el) el.remove();
+        }
+    });
+
+   
+    container.innerHTML = all.map(renderCard).join("");
+}
+
+async function fetchSessions() {
+    try {
+        const res = await fetch("/api/sessions");
+        if (res.redirected || res.status === 302) {
+            window.location.href = "/login";
+            return;
+        }
+        const data = await res.json();
+
+       
+        data.forEach(s => {
+            if (!deletedIds.has(s.id)) {
+                sessionStore.set(s.id, s);
+            }
+        });
+
+        rebuildUI();
+    } catch (err) {
+        console.error("Dashboard fetch error:", err);
+    }
+}
+
+async function deleteSession(id) {
+    deletedIds.add(id);
+    sessionStore.delete(id);
+
+    
+    const el = document.getElementById("card-" + id);
+    if (el) { el.style.opacity = "0"; el.style.transition = "opacity .3s"; }
+    setTimeout(rebuildUI, 320);
+
+    try {
+        await fetch(`/api/session/${id}`, { method: "DELETE" });
+    } catch (e) {
+        console.error("Delete failed:", e);
+    }
+}
+
+function confirmClearAll() {
+    document.getElementById("confirm-overlay").classList.add("show");
+}
+function closeConfirm() {
+    document.getElementById("confirm-overlay").classList.remove("show");
+}
+async function clearAll() {
+    closeConfirm();
+    sessionStore.clear();
+    deletedIds.clear();
+    rebuildUI();
+    try {
+        await fetch("/api/sessions", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ confirm: true })
+        });
+    } catch (e) {
+        console.error("Clear all failed:", e);
+    }
+}
+
+// Initial load + poll
+fetchSessions();
+setInterval(fetchSessions, 3000);
+</script>
+
+</body>
+</html>

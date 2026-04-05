@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Session Detail</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #e2e8f0;
+            font-family: Arial, sans-serif; padding: 28px;
+            min-height: 100vh;
+        }
+
+        /* ── Nav ── */
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: #38bdf8; text-decoration: none; font-size: .85rem;
+            margin-bottom: 22px;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        /* ── Header ── */
+        .page-header { margin-bottom: 24px; }
+        .page-header h2 { font-size: 1.35rem; color: #f1f5f9; }
+        .page-header .sub { color: #64748b; font-size: .82rem; margin-top: 4px; }
+
+        /* ── Stat strip ── */
+        .stat-strip { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+        .stat-card {
+            background: #1e293b; border-radius: 10px;
+            padding: 14px 22px; text-align: center;
+            min-width: 110px; flex: 1;
+            border: 1px solid #334155;
+        }
+        .stat-card .val { font-size: 1.45rem; font-weight: 700; color: #38bdf8; }
+        .stat-card .lbl {
+            font-size: .7rem; color: #94a3b8; margin-top: 4px;
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+
+        /* Score bar inside stat card */
+        .score-bar-wrap {
+            background: #0f172a; border-radius: 4px;
+            height: 5px; margin-top: 8px; overflow: hidden;
+        }
+        .score-bar { height: 100%; border-radius: 4px; transition: width .5s; }
+
+        /* Risk-coloured val */
+        .risk-high .val { color: #ef4444; }
+        .risk-med  .val { color: #f97316; }
+        .risk-low  .val { color: #22c55e; }
+
+        /* Status-coloured val */
+        .status-active .val  { color: #38bdf8; }
+        .status-closed .val  { color: #64748b; }
+        .status-idle   .val  { color: #a8a29e; }
+
+        /* ── Section title ── */
+        .section-title {
+            font-size: .77rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .06em;
+            color: #64748b; margin-bottom: 14px;
+        }
+
+        /* ── Behaviour grid ── */
+        .behaviour-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 14px; margin-bottom: 32px;
+        }
+        .bcard {
+            background: #1e293b; border-radius: 10px;
+            padding: 16px 18px; border-left: 4px solid #334155;
+        }
+        /* Border colours by value */
+        .bcard.val-none,  .bcard.val-no      { border-color: #475569; }
+        .bcard.val-low,   .bcard.val-minimal  { border-color: #f97316; }
+        .bcard.val-moderate, .bcard.val-brief,
+        .bcard.val-partial, .bcard.val-present { border-color: #eab308; }
+        .bcard.val-high,  .bcard.val-long,
+        .bcard.val-detected, .bcard.val-yes   { border-color: #ef4444; }
+        .bcard.val-active,.bcard.val-normal   { border-color: #22c55e; }
+        .bcard.val-suspicious                 { border-color: #f97316; }
+
+        .bcard-top {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 8px;
+        }
+        .bcard-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: .8rem; font-weight: 600;
+            color: #94a3b8; text-transform: uppercase; letter-spacing: .04em;
+        }
+        .bcard-value { font-size: .95rem; font-weight: 700; }
+
+        .bval-none,.bval-no        { color: #64748b; }
+        .bval-low,.bval-minimal    { color: #f97316; }
+        .bval-moderate,.bval-brief,
+        .bval-partial,.bval-present{ color: #eab308; }
+        .bval-high,.bval-long,
+        .bval-detected,.bval-yes   { color: #ef4444; }
+        .bval-active,.bval-normal  { color: #22c55e; }
+        .bval-suspicious           { color: #fb923c; }
+
+        .bcard-reason { font-size: .82rem; color: #94a3b8; line-height: 1.55; }
+
+        /* ── Misc ── */
+        .state-msg { color: #475569; font-size: .9rem; padding: 40px; text-align: center; }
+        .refresh-note { color: #334155; font-size: .73rem; margin-top: 8px; }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .pulse { display:inline-block; animation: pulse 1.4s infinite; }
+    </style>
+</head>
+<body>
+
+<a class="back-link" href="/dashboard">← Back to Dashboard</a>
+
+<div class="page-header">
+    <h2>Session Detail</h2>
+    <p class="sub" id="session-sub">Loading…</p>
+</div>
+
+<!-- Stat strip -->
+<div class="stat-strip" id="stat-strip">
+    <div class="stat-card" id="card-score">
+        <div class="val" id="s-score">–</div>
+        <div class="lbl">Risk Score</div>
+        <div class="score-bar-wrap"><div class="score-bar" id="score-bar"></div></div>
+    </div>
+    <div class="stat-card" id="card-cat">
+        <div class="val" id="s-category">–</div>
+        <div class="lbl">Category</div>
+    </div>
+    <div class="stat-card">
+        <div class="val" id="s-ai">–</div>
+        <div class="lbl">AI Prediction</div>
+    </div>
+    <div class="stat-card">
+        <div class="val" id="s-events">–</div>
+        <div class="lbl">Events</div>
+    </div>
+    <div class="stat-card">
+        <div class="val" id="s-duration">–</div>
+        <div class="lbl">Duration (s)</div>
+    </div>
+    <div class="stat-card" id="card-status">
+        <div class="val" id="s-status">–</div>
+        <div class="lbl">Status</div>
+    </div>
+</div>
+
+<!-- Behaviour grid -->
+<p class="section-title">Behaviour Analysis</p>
+<div class="behaviour-grid" id="behaviour-grid">
+    <div class="state-msg"><span class="pulse">⏳</span> Loading behaviour analysis…</div>
+</div>
+<p class="refresh-note">🔄 Auto-refreshes every 3 seconds</p>
+
+<script>
+const SESSION_ID = "{{ session_id }}";
+
+function valCls(v) {
+    return (v || "none").toLowerCase().replace(/\s+/g, "-");
+}
+
+function scoreColor(score) {
+    if (score >= 60) return "#ef4444";
+    if (score >= 30) return "#f97316";
+    return "#22c55e";
+}
+
+function renderStats(d) {
+    document.getElementById("session-sub").textContent =
+        `Session ${SESSION_ID.substring(0, 8)}… · ${d.event_count} events · ${d.duration_s}s`;
+
+    
+    const score = d.risk_score;
+    document.getElementById("s-score").textContent    = score + "%";
+    document.getElementById("s-category").textContent = d.risk_category;
+    document.getElementById("s-ai").textContent       = d.ai_prediction;
+    document.getElementById("s-events").textContent   = d.event_count;
+    document.getElementById("s-duration").textContent = d.duration_s;
+
+    
+    const bar = document.getElementById("score-bar");
+    bar.style.width      = score + "%";
+    bar.style.background = scoreColor(score);
+
+    
+    const catCard = document.getElementById("card-cat");
+    catCard.className = "stat-card";
+    if (d.risk_category === "High Risk")        catCard.classList.add("risk-high");
+    else if (d.risk_category === "Medium Risk") catCard.classList.add("risk-med");
+    else                                        catCard.classList.add("risk-low");
+
+    
+    const statusEl   = document.getElementById("s-status");
+    const statusCard = document.getElementById("card-status");
+    statusEl.textContent  = d.status;
+    statusCard.className  = "stat-card";
+    if      (d.status === "active") statusCard.classList.add("status-active");
+    else if (d.status === "closed") statusCard.classList.add("status-closed");
+    else if (d.status === "idle")   statusCard.classList.add("status-idle");
+}
+
+function renderBehaviours(behaviours) {
+    const grid = document.getElementById("behaviour-grid");
+    grid.innerHTML = behaviours.map(b => {
+        const vc = valCls(b.value);
+        return `
+        <div class="bcard val-${vc}">
+          <div class="bcard-top">
+            <span class="bcard-label">
+              <span>${b.icon}</span>${b.label}
+            </span>
+            <span class="bcard-value bval-${vc}">${b.value}</span>
+          </div>
+          <div class="bcard-reason">${b.reason}</div>
+        </div>`;
+    }).join("");
+}
+
+let pollStopped = false;
+
+async function loadAnalysis() {
+    try {
+        const res  = await fetch(`/api/session/${SESSION_ID}/analysis`);
+
+        if (res.status === 302 || res.redirected) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const data = await res.json();
+
+        if (data.error) {
+            document.getElementById("behaviour-grid").innerHTML =
+                `<div class="state-msg">${data.error}</div>`;
+            return;
+        }
+
+        renderStats(data);
+        renderBehaviours(data.behaviours);
+
+       
+        if (data.status === "closed" && !pollStopped) {
+            pollStopped = true;
+            document.querySelector(".refresh-note").textContent =
+                "✅ Session closed — final snapshot";
+        }
+
+    } catch (err) {
+        document.getElementById("behaviour-grid").innerHTML =
+            `<div class="state-msg">⚠️ Failed to load — retrying…</div>`;
+        console.error(err);
+    }
+}
+
+loadAnalysis();
+const poll = setInterval(() => {
+    if (pollStopped) { clearInterval(poll); return; }
+    loadAnalysis();
+}, 3000);
+</script>
+
+</body>
+</html>

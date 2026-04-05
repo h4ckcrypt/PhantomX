@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Campaigns</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:Arial,sans-serif;min-height:100vh}
+
+/* ── Topbar ── */
+.topbar{background:#1e293b;padding:14px 24px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid #334155;
+  position:sticky;top:0;z-index:20}
+.topbar h1{font-size:1.1rem;color:#f1f5f9}
+.topbar-links{display:flex;gap:10px;align-items:center}
+.nav-link{color:#94a3b8;text-decoration:none;font-size:.82rem;padding:5px 12px;
+  border:1px solid #334155;border-radius:6px}
+.nav-link:hover{background:#334155;color:#e2e8f0}
+.nav-link.active{border-color:#38bdf8;color:#38bdf8}
+.logout-btn{color:#64748b;font-size:.8rem;text-decoration:none;
+  padding:5px 12px;border:1px solid #334155;border-radius:6px}
+.logout-btn:hover{background:#334155;color:#e2e8f0}
+
+/* ── Layout ── */
+.page{padding:24px;max-width:1100px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:24px}
+.page-header h2{font-size:1.25rem;color:#f1f5f9}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;
+  border-radius:8px;border:none;font-size:.88rem;font-weight:600;cursor:pointer}
+.btn-primary{background:#0ea5e9;color:#fff}
+.btn-primary:hover{background:#0284c7}
+.btn-danger{background:none;color:#ef4444;border:1px solid #7f1d1d;font-size:.8rem;padding:5px 10px}
+.btn-danger:hover{background:#450a0a}
+.btn-sm{padding:5px 12px;font-size:.78rem;font-weight:500}
+.btn-outline{background:none;color:#38bdf8;border:1px solid #38bdf8}
+.btn-outline:hover{background:#0c4a6e}
+
+/* ── Campaign cards ── */
+.campaign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.camp-card{background:#1e293b;border-radius:12px;border:1px solid #334155;
+  padding:20px;display:flex;flex-direction:column;gap:14px}
+.camp-card.active  {border-top:3px solid #22c55e}
+.camp-card.paused  {border-top:3px solid #eab308}
+.camp-card.completed{border-top:3px solid #64748b}
+.camp-name{font-size:1rem;font-weight:700;color:#f1f5f9}
+.camp-meta{font-size:.78rem;color:#64748b;display:flex;gap:12px;flex-wrap:wrap}
+.badge-status{display:inline-block;padding:2px 10px;border-radius:20px;
+  font-size:.72rem;font-weight:700;text-transform:uppercase}
+.badge-active   {background:#052e16;color:#22c55e}
+.badge-paused   {background:#422006;color:#eab308}
+.badge-completed{background:#1e293b;color:#64748b;border:1px solid #334155}
+
+/* ── Metric row ── */
+.metrics-row{display:flex;gap:10px;flex-wrap:wrap}
+.metric-box{flex:1;min-width:60px;background:#0f172a;border-radius:8px;
+  padding:8px 10px;text-align:center}
+.metric-box .mval{font-size:1.1rem;font-weight:700}
+.metric-box .mlbl{font-size:.65rem;color:#64748b;margin-top:2px;text-transform:uppercase}
+.m-red   .mval{color:#ef4444}
+.m-orange.mval{color:#f97316}
+.m-green .mval{color:#22c55e}
+.m-blue  .mval{color:#38bdf8}
+.m-grey  .mval{color:#94a3b8}
+
+/* ── Progress bar ── */
+.prog-wrap{background:#0f172a;border-radius:4px;height:6px;overflow:hidden;margin-top:2px}
+.prog-bar{height:100%;border-radius:4px;transition:width .4s}
+
+.camp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+/* ── Empty state ── */
+.empty{color:#475569;text-align:center;padding:60px 20px;font-size:.9rem}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:#000b;z-index:100;
+  align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;
+  padding:32px;width:100%;max-width:480px}
+.modal h3{font-size:1.1rem;color:#f1f5f9;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.78rem;color:#94a3b8;
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;padding:9px 13px;
+  border-radius:8px;border:1px solid #334155;background:#0f172a;
+  color:#e2e8f0;font-size:.9rem;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:#38bdf8}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-cancel{background:#334155;color:#e2e8f0;border:none;padding:8px 18px;
+  border-radius:8px;cursor:pointer;font-size:.88rem}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🛡 Phishing Intelligence</h1>
+  <div class="topbar-links">
+    <a class="nav-link" href="/dashboard">Sessions</a>
+    <a class="nav-link active" href="/campaigns">Campaigns</a>
+    <a class="logout-btn" href="/logout">Sign Out</a>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <h2>📁 Campaigns</h2>
+    <button class="btn btn-primary" onclick="openCreate()">+ New Campaign</button>
+  </div>
+
+  <div class="campaign-grid" id="campaign-grid">
+    <div class="empty">Loading campaigns…</div>
+  </div>
+</div>
+
+<!-- Create Campaign Modal -->
+<div class="overlay" id="create-overlay">
+  <div class="modal">
+    <h3>New Campaign</h3>
+    <div class="form-group">
+      <label>Campaign Name</label>
+      <input id="c-name" type="text" placeholder="Q2 Phishing Test">
+    </div>
+    <div class="form-group">
+      <label>Template</label>
+      <select id="c-template"><option value="">Loading…</option></select>
+      <div style="font-size:.72rem;color:#475569;margin-top:5px">
+        Add folders to <code>templates/</code> — they appear here automatically.
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Start Date (optional)</label>
+      <input id="c-start" type="datetime-local">
+    </div>
+    <div class="form-group">
+      <label>End Date (optional)</label>
+      <input id="c-end" type="datetime-local">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCreate()">Cancel</button>
+      <button class="btn btn-primary" onclick="createCampaign()">Create →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadTemplateOptions() {
+  try {
+    const res  = await fetch("/api/templates");
+    const list = await res.json();
+    const sel  = document.getElementById("c-template");
+    sel.innerHTML = list.length
+      ? list.map(t => `<option value="${t}">${t}</option>`).join("")
+      : '<option value="">No templates found</option>';
+  } catch(e) { console.error("Template load failed", e); }
+}
+function openCreate() {
+  loadTemplateOptions();
+  document.getElementById("create-overlay").classList.add("show");
+}
+function closeCreate() { document.getElementById("create-overlay").classList.remove("show"); }
+
+function statusBadge(s) {
+  return `<span class="badge-status badge-${s}">${s}</span>`;
+}
+
+function renderCard(c) {
+  const m   = c.metrics || {};
+  const cls = c.status || "active";
+  const cr  = m.compromise_rate || 0;
+  const barW = Math.min(cr, 100);
+  const barColor = cr >= 50 ? "#ef4444" : cr >= 20 ? "#f97316" : "#22c55e";
+
+  return `
+  <div class="camp-card ${cls}">
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span class="camp-name">${c.name}</span>
+        ${statusBadge(c.status)}
+      </div>
+      <div class="camp-meta">
+        <span>🖼 ${c.template}</span>
+        <span>📅 ${new Date(c.created_at*1000).toLocaleDateString()}</span>
+      </div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-box m-blue">
+        <div class="mval">${m.total||0}</div><div class="mlbl">Targets</div>
+      </div>
+      <div class="metric-box m-grey">
+        <div class="mval">${m.sent||0}</div><div class="mlbl">Sent</div>
+      </div>
+      <div class="metric-box m-orange">
+        <div class="mval">${m.click_rate||0}%</div><div class="mlbl">Clicked</div>
+      </div>
+      <div class="metric-box m-orange">
+        <div class="mval">${m.interaction_rate||0}%</div><div class="mlbl">Engaged</div>
+      </div>
+      <div class="metric-box m-red">
+        <div class="mval">${m.compromise_rate||0}%</div><div class="mlbl">Compromised</div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:.72rem;color:#64748b;margin-bottom:4px">Compromise rate</div>
+      <div class="prog-wrap">
+        <div class="prog-bar" style="width:${barW}%;background:${barColor}"></div>
+      </div>
+    </div>
+
+    <div class="camp-actions">
+      <a class="btn btn-outline btn-sm" href="/campaign/${c.id}">View Details →</a>
+      ${c.status !== "completed"
+        ? `<button class="btn btn-sm" style="background:#334155;color:#e2e8f0;border:none"
+             onclick="setStatus('${c.id}','${c.status==="active"?"paused":"active"}')">
+             ${c.status === "active" ? "⏸ Pause" : "▶ Resume"}
+           </button>
+           <button class="btn btn-sm" style="background:#422006;color:#eab308;border:none"
+             onclick="setStatus('${c.id}','completed')">✓ Complete</button>`
+        : ""}
+      <button class="btn btn-danger btn-sm" onclick="deleteCamp('${c.id}')">✕ Delete</button>
+    </div>
+  </div>`;
+}
+
+async function loadCampaigns() {
+  const res  = await fetch("/api/campaigns");
+  const data = await res.json();
+  const grid = document.getElementById("campaign-grid");
+  if (!data.length) {
+    grid.innerHTML = '<div class="empty">No campaigns yet.<br>Click <strong>+ New Campaign</strong> to start.</div>';
+    return;
+  }
+  grid.innerHTML = data.map(renderCard).join("");
+}
+
+async function createCampaign() {
+  const name     = document.getElementById("c-name").value.trim();
+  const template = document.getElementById("c-template").value;
+  const start    = document.getElementById("c-start").value;
+  const end      = document.getElementById("c-end").value;
+  if (!name) { alert("Campaign name required"); return; }
+
+  const body = { name, template };
+  if (start) body.start_time = new Date(start).getTime() / 1000;
+  if (end)   body.end_time   = new Date(end).getTime()   / 1000;
+
+  const res = await fetch("/api/campaigns", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (res.ok) {
+    closeCreate();
+    document.getElementById("c-name").value = "";
+    loadCampaigns();
+  }
+}
+
+async function setStatus(cid, status) {
+  await fetch(`/api/campaigns/${cid}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+  loadCampaigns();
+}
+
+async function deleteCamp(cid) {
+  if (!confirm("Delete this campaign?")) return;
+  await fetch(`/api/campaigns/${cid}`, { method: "DELETE" });
+  loadCampaigns();
+}
+
+loadCampaigns();
+setInterval(loadCampaigns, 10000);
+</script>
+</body>
+</html>
